@@ -10,4 +10,7 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+        chunkSizeWarningLimit: 1000, // ขยายเพดานคำเตือนเป็น 1000 kB (1 MB)
+    },
 });

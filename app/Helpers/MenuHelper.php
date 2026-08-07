@@ -2,84 +2,145 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Facades\Gate; // 1. เรียกใช้ Gate Facade
+
 class MenuHelper
 {
+
     public static function getMainNavItems()
     {
-        return [
+        $items = [
             [
-                'icon' => 'dashboard',
-                'name' => 'Dashboard',
-                'subItems' => [
-                    ['name' => 'Ecommerce', 'path' => '/'],
-                ],
+                'icon' => 'charts',
+                'name' => 'Chatbot AI',
+                'path' => url('/chatbot'),
             ],
             [
-                'icon' => 'calendar',
-                'name' => 'Calendar',
-                'path' => '/calendar',
+                'icon' => 'task',
+                'name' => 'History',
+                'path' => url('/chatbot/history'),
             ],
             [
-                'icon' => 'user-profile',
-                'name' => 'User Profile',
-                'path' => '/profile',
+                'icon' => 'ai-assistant',
+                'name' => 'Training AI',
+                'path' => url('/admin/chatbot/documents'),
+                // 2. เงื่อนไขเช็คสิทธิ์เฉพาะแอดมิน โดยใช้ Gate ที่คุณสร้างขึ้น
+                'visible' => Gate::allows('admin_chat'),
             ],
             [
-                'name' => 'Forms',
-                'icon' => 'forms',
-                'subItems' => [
-                    ['name' => 'Form Elements', 'path' => '/form-elements', 'pro' => false],
-                ],
-            ],
-            [
-                'name' => 'Tables',
-                'icon' => 'tables',
-                'subItems' => [
-                    ['name' => 'Basic Tables', 'path' => '/basic-tables', 'pro' => false]
-                ],
-            ],
-            [
-                'name' => 'Pages',
-                'icon' => 'pages',
-                'subItems' => [
-                    ['name' => 'Blank Page', 'path' => '/blank', 'pro' => false],
-                    ['name' => '404 Error', 'path' => '/error-404', 'pro' => false]
-                ],
+                'icon' => 'forms', // หรือไอคอนตามธีมของคุณ
+                'name' => 'AI Audit Logs',
+                'path' => url('/admin/chatbot/logs'),
+                'visible' => Gate::allows('admin_chat'),
             ],
         ];
+
+        // 3. กรองเมนู: ถ้าอันไหนตั้งค่า 'visible' เป็น false จะถูกซ่อนอัตโนมัติ
+        return array_filter($items, function ($item) {
+            // ถ้ามีการกำหนดค่า 'visible' และเป็น false ให้ซ่อนเมนู
+            if (isset($item['visible']) && $item['visible'] === false) {
+                return false;
+            }
+            return true;
+        });
     }
+
+    // public static function getMainNavItems()
+    // {
+    //     return [
+    //         [
+    //             'icon' => 'charts',
+    //             'name' => 'Chatbot AI',
+    //             'path' => url('/chatbot'),
+    //         ],
+    //         [
+    //             'icon' => 'task',
+    //             'name' => 'History',
+    //             'path' => url('/chatbot/history'),
+    //         ],
+    //         [
+    //             'icon' => 'ai-assistant',
+    //             'name' => 'Training AI',
+    //             'path' => url('/chatbot/documents'),
+    //         ],
+    //         // [
+    //         //     'icon' => 'dashboard',
+    //         //     'name' => 'Dashboard',
+    //         //     'subItems' => [
+    //         //         ['name' => 'Ecommerce', 'path' => url('/dashboard')],
+    //         //     ],
+    //         // ],
+    //         // [
+    //         //     'icon' => 'calendar',
+    //         //     'name' => 'Calendar',
+    //         //     'path' => url('/calendar'),
+    //         // ],
+    //         // [
+    //         //     'icon' => 'user-profile',
+    //         //     'name' => 'User Profile',
+    //         //     'path' =>  url('/profile'),
+    //         // ],
+    //         // [
+    //         //     'name' => 'Forms',
+    //         //     'icon' => 'forms',
+    //         //     'subItems' => [
+    //         //         ['name' => 'Form Elements', 'path' => url('/form-elements'), 'pro' => false],
+    //         //     ],
+    //         // ],
+    //         // [
+    //         //     'name' => 'Tables',
+    //         //     'icon' => 'tables',
+    //         //     'subItems' => [
+    //         //         ['name' => 'Basic Tables', 'path' => url('/basic-tables'), 'pro' => false]
+    //         //     ],
+    //         // ],
+    //         // [
+    //         //     'name' => 'Pages',
+    //         //     'icon' => 'pages',
+    //         //     'subItems' => [
+    //         //         ['name' => 'Blank Page', 'path' => url('/blank'), 'pro' => false],
+    //         //         ['name' => '404 Error', 'path' => url('/error-404'), 'pro' => false]
+    //         //     ],
+    //         // ],
+    //     ];
+    // }
 
     public static function getOthersItems()
     {
         return [
-            [
-                'icon' => 'charts',
-                'name' => 'Charts',
-                'subItems' => [
-                    ['name' => 'Line Chart', 'path' => '/line-chart', 'pro' => false],
-                    ['name' => 'Bar Chart', 'path' => '/bar-chart', 'pro' => false]
-                ],
-            ],
-            [
-                'icon' => 'ui-elements',
-                'name' => 'UI Elements',
-                'subItems' => [
-                    ['name' => 'Alerts', 'path' => '/alerts', 'pro' => false],
-                    ['name' => 'Avatar', 'path' => '/avatars', 'pro' => false],
-                    ['name' => 'Badge', 'path' => '/badge', 'pro' => false],
-                    ['name' => 'Buttons', 'path' => '/buttons', 'pro' => false],
-                    ['name' => 'Images', 'path' => '/image', 'pro' => false],
-                    ['name' => 'Videos', 'path' => '/videos', 'pro' => false],
-                ],
-            ],
-            [
-                'icon' => 'authentication',
-                'name' => 'Authentication',
-                'subItems' => [
-                    ['name' => 'Sign In', 'path' => '/signin', 'pro' => false],
-                    ['name' => 'Sign Up', 'path' => '/signup', 'pro' => false],
-                ],
-            ],
+            // [
+            //     'icon' => 'ai-assistant',
+            //     'name' => 'Training AI',
+            //     'path' => url('/chatbot/documents'),
+            // ],
+            // [
+            //     'icon' => 'ai-assistant',
+            //     'name' => 'Train AI',
+            //     'subItems' => [
+            //         ['name' => 'Line Chart', 'path' => '/line-chart', 'pro' => false],
+            //         ['name' => 'Bar Chart', 'path' => '/bar-chart', 'pro' => false]
+            //     ],
+            // ],
+            // [
+            //     'icon' => 'ui-elements',
+            //     'name' => 'UI Elements',
+            //     'subItems' => [
+            //         ['name' => 'Alerts', 'path' => '/alerts', 'pro' => false],
+            //         ['name' => 'Avatar', 'path' => '/avatars', 'pro' => false],
+            //         ['name' => 'Badge', 'path' => '/badge', 'pro' => false],
+            //         ['name' => 'Buttons', 'path' => '/buttons', 'pro' => false],
+            //         ['name' => 'Images', 'path' => '/image', 'pro' => false],
+            //         ['name' => 'Videos', 'path' => '/videos', 'pro' => false],
+            //     ],
+            // ],
+            // [
+            //     'icon' => 'authentication',
+            //     'name' => 'Authentication',
+            //     'subItems' => [
+            //         ['name' => 'Sign In', 'path' => '/signin', 'pro' => false],
+            //         ['name' => 'Sign Up', 'path' => '/signup', 'pro' => false],
+            //     ],
+            // ],
         ];
     }
 
@@ -90,10 +151,10 @@ class MenuHelper
                 'title' => 'Menu',
                 'items' => self::getMainNavItems()
             ],
-            [
-                'title' => 'Others',
-                'items' => self::getOthersItems()
-            ]
+            // [
+            //     'title' => 'Admin',
+            //     'items' => self::getOthersItems()
+            // ]
         ];
     }
 
