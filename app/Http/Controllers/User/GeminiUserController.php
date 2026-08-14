@@ -8,7 +8,6 @@ use App\Models\ChatbotLog;
 use Gemini\Laravel\Facades\Gemini;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // 🟢 ตรวจสอบว่ามี Facade นี้ด้านบน Controller
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class GeminiUserController extends Controller
