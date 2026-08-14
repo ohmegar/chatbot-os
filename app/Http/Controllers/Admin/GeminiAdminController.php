@@ -5,13 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ChatbotDocument;
 use App\Models\ChatbotDocumentLog;
-use App\Models\ChatbotDocumentChunks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Gemini\Laravel\Facades\Gemini;
 use Gemini\Enums\MimeType;
 use Smalot\PdfParser\Parser;
-use Illuminate\Support\Facades\DB; // 🟢 ตรวจสอบว่ามี Facade นี้ด้านบน Controller
+use Illuminate\Support\Facades\DB;
 
 
 class GeminiAdminController extends Controller
