@@ -27,6 +27,9 @@ class GeminiUserController extends Controller
 
         try {
             // 1. ดึงเอกสารล่าสุดในระบบ
+            // โดยปกติแล้ว หากโมเดล ChatbotDocument ของคุณมีการใช้งานแทร็ก Soft Deletes
+            // (use SoftDeletes;) คำสั่งค้นหาข้อมูลทั่วไป เช่น ChatbotDocument::latest()->first()
+            // จะทำการ ข้ามเอกสารที่ถูกย้ายไปถังขยะให้อัตโนมัติ อยู่แล้ว
             $document = ChatbotDocument::latest()->first();
 
             if (!$document) {

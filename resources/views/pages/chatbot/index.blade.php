@@ -65,7 +65,7 @@
                 <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white text-xs shrink-0">AI
                 </div>
                 <div class="p-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm max-w-xl">
-                    สวัสดีครับ! ผมพร้อมช่วยตอบคำถามและค้นหาข้อมูลจากเอกสารระเบียบภายในแล้วครับ
+                    สวัสดี! น้องมะลิ พร้อมช่วยตอบคำถามและค้นหาข้อมูลจากเอกสารระเบียบภายในแล้ว
                 </div>
             </div>
         </div>
