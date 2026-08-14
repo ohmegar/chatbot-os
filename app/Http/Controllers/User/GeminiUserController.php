@@ -62,7 +62,7 @@ class GeminiUserController extends Controller
             if (empty($combinedContext)) {
                 return response()->json([
                     'status' => 'success',
-                    'answer' => 'ขออภัยครับ ไม่พบเนื้อหาข้อความภายในเอกสารนี้ (ไม่มี Chunk ที่ตรงกับ Document ID นี้)',
+                    'answer' => 'ขออภัยครับ ไม่พบเนื้อหาข้อความภายในระบบนี้',
                     'source' => $sourceInfo
                 ]);
             }

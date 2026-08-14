@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Session;
 use Gemini\Laravel\Facades\Gemini;
 use Gemini\Enums\MimeType;
 use Smalot\PdfParser\Parser;
+use Illuminate\Support\Facades\DB; // 🟢 ตรวจสอบว่ามี Facade นี้ด้านบน Controller
+
 
 class GeminiAdminController extends Controller
 {
@@ -59,18 +61,27 @@ class GeminiAdminController extends Controller
             $fullText = $pdf->getText();
             $fullText = preg_replace('/\s+/', ' ', $fullText);
 
+
             // 4. ตัดแบ่งข้อความ (Chunking) ขนาด 1,000 ตัวอักษร
             $chunkSize = 1000;
             $length = mb_strlen($fullText);
 
             if ($length > 0) {
+                // 🟢 หาค่า ID สูงสุดปัจจุบันของตาราง Chunks เผื่อไว้ใช้ป้องกันการชน
+                $nextId = DB::table('SUPPORT_CHATBOT_DOCUMENT_CHUNKS')->max('CH_CID') + 1;
+
                 for ($i = 0; $i < $length; $i += $chunkSize) {
                     $chunkText = trim(mb_substr($fullText, $i, $chunkSize));
                     if ($chunkText !== '') {
-                        ChatbotDocumentChunks::create([
-                            'DOCUMENT_ID' => $document->getKey(), // ใช้ชื่อฟิลด์ตัวพิมพ์ใหญ่ตามโครงสร้าง DB
+
+                        // 🟢 บันทึกโดยระบุค่า CH_CID ควบคุมเอง ป้องกันปัญหา Oracle Trigger/Sequence ตีกัน
+                        DB::table('SUPPORT_CHATBOT_DOCUMENT_CHUNKS')->insert([
+                            'CH_CID'      => $nextId++, // กำหนด Primary Key เองและบวกเพิ่มทีละ 1
+                            'DOCUMENT_ID' => $document->getKey(),
                             'CHUNK_TEXT'  => $chunkText,
                             'CHUNK_INDEX' => floor($i / $chunkSize),
+                            'CREATED_AT'  => now(),
+                            'UPDATED_AT'  => now(),
                         ]);
                     }
                 }
@@ -120,26 +131,32 @@ class GeminiAdminController extends Controller
 
     public function trash()
     {
-        $trashedDocs = ChatbotDocument::onlyTrashed()->paginate(10);
+        $trashedDocs = ChatbotDocument::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(10);
         return view('pages.admin.chatbot.trash', compact('trashedDocs'));
     }
 
+
     public function restore($id)
     {
+        // 1. ค้นหาเอกสารที่อยู่ในถังขยะ (Soft Deleted)
         $document = ChatbotDocument::onlyTrashed()->findOrFail($id);
+
+        // 2. สั่งกู้คืนข้อมูล (deleted_at จะกลับมาเป็น NULL อัตโนมัติ)
         $document->restore();
 
         $empId = Session::get('employee_id');
 
+        // บันทึก Log
         ChatbotDocumentLog::create([
             'document_id' => $document->getKey(),
-            'emp_id' => $empId,
-            'action' => 'RESTORE',
+            'emp_id'      => $empId,
+            'action'      => 'RESTORE',
             'description' => 'กู้คืนเอกสารจากถังขยะ: ' . $document->title,
         ]);
 
         return redirect()->back()->with('success', 'กู้คืนเอกสารสำเร็จ');
     }
+
 
     public function logs()
     {

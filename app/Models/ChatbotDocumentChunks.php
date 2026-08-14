@@ -11,6 +11,7 @@ class ChatbotDocumentChunks extends Model
     protected $primaryKey = 'ch_cid';
     public $sequence = 'support_chatbot_document_chunks_seq';
     public $incrementing = true;
+    protected $keyType = 'int';
     public $timestamps = true;
 
     protected $fillable = [

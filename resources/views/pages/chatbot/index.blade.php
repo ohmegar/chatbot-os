@@ -51,7 +51,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h2 class="font-bold text-gray-800 dark:text-white">DSS Gemini AI Assistant (ทดสอบด้านระเบียบสารบรรณ)</h2>
+                    <h2 class="font-bold text-gray-800 dark:text-white">DSS AI Assistant (ทดสอบด้านระเบียบสารบรรณ)</h2>
                     <p class="text-xs text-gray-500">ระบบปัญญาประดิษฐ์อัจฉริยะขับเคลื่อนด้วย Google Gemini API</p>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                 <div id="${loadingId}" class="flex items-start gap-3 mb-4">
                     <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white text-xs shrink-0">AI</div>
                     <div class="p-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 text-sm flex items-center gap-2">
-                        <span>AI กำลังประมวลผลคำตอบ</span>
+                        <span>DSS AI กำลังประมวลผลคำตอบ</span>
                         <div class="typing-dot flex items-center">
                             <span></span><span></span><span></span>
                         </div>
