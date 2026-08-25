@@ -10,4 +10,6 @@ return [
     |
     */
     'api_key' => env('GEMINI_API_KEY'),
+    // 🟢 เพิ่มการกำหนดเวลา Timeout ตรงนี้ (เช่น 60 หรือ 120 วินาที)
+    'timeout' => 120,
 ];

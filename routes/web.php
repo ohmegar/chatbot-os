@@ -36,8 +36,6 @@ Route::middleware(['web', 'keycloak-web'])->group(function () {
 
 
 
-
-
 // สำหรับ User ทั่วไป (ผ่าน Keycloak & เช็ค IE เรียบร้อย)
 Route::middleware(['check.ie', 'keycloak-web'])->group(function () {
     Route::get('/chatbot', [GeminiUserController::class, 'index'])->name('chatbot.index');
@@ -53,6 +51,9 @@ Route::middleware(['check.ie', 'keycloak-web', 'can:admin_chat'])->prefix('admin
     Route::get('/chatbot/trash', [GeminiAdminController::class, 'trash'])->name('chatbot.trash');
     Route::patch('/chatbot/documents/{id}/restore', [GeminiAdminController::class, 'restore'])->name('chatbot.restore');
     Route::get('/chatbot/logs', [GeminiAdminController::class, 'logs'])->name('chatbot.logs');
+
+    // เส้นทางสำหรับดูประวัติทั้งหมดในระบบ
+    Route::get('/chatbot/history-all', [GeminiAdminController::class, 'historyAll'])->name('chatbot.history.all');
 });
 
 

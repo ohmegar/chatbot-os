@@ -21,9 +21,10 @@
                 @foreach ($menuGroup['items'] as $itemIndex => $item)
                     @if (isset($item['subItems']))
                         // Check if any submenu item matches current path
-                        @foreach ($item['subItems'] as $subItem)
-                            if (currentPath === '{{ ltrim($subItem['path'], '/') }}' ||
-                                window.location.pathname === '{{ $subItem['path'] }}') {
+                       @foreach ($item['subItems'] as $subItem)
+                            // 🟢 แปลง URL ของ Submenu ให้เหลือเฉพาะ Path สำหรับเช็ค
+                            const subPath_{{ $groupIndex }}_{{ $itemIndex }} = new URL('{{ $subItem['path'] }}', window.location.origin).pathname.replace(/\/$/, '');
+                            if (currentPath === subPath_{{ $groupIndex }}_{{ $itemIndex }}) {
                                 this.openSubmenus['{{ $groupIndex }}-{{ $itemIndex }}'] = true;
                             } @endforeach
             @endif
@@ -45,8 +46,18 @@
             const key = groupIndex + '-' + itemIndex;
             return this.openSubmenus[key] || false;
         },
+        // 🟢 ปรับปรุงฟังก์ชัน isActive ให้ตัด Domain ออกและเทียบ Path ได้อย่างแม่นยำ 100%
         isActive(path) {
-            return window.location.pathname === path || '{{ $currentPath }}' === path.replace(/^\//, '');
+            try {
+                const targetPath = new URL(path, window.location.origin).pathname.replace(/\/$/, '');
+                const currentPath = window.location.pathname.replace(/\/$/, '');
+                return currentPath === targetPath;
+            } catch (e) {
+                // เผื่อกรณีส่งมาเป็น path เปล่าๆ เช่น '/chatbot'
+                const cleanPath = path.replace(/\/$/, '');
+                const currentPath = window.location.pathname.replace(/\/$/, '');
+                return currentPath === cleanPath || currentPath === '/' + cleanPath;
+            }
         }
     }"
     :class="{

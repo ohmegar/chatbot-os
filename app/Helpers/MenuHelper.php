@@ -33,6 +33,12 @@ class MenuHelper
                 'path' => url('/admin/chatbot/logs'),
                 'visible' => Gate::allows('admin_chat'),
             ],
+            [
+                'icon' => 'support-ticket', // หรือเลือกไอคอนตามต้องการ
+                'name' => 'History All',
+                'path' => url('/admin/chatbot/history-all'),
+                'visible' => Gate::allows('admin_chat'),
+            ],
         ];
 
         // 3. กรองเมนู: ถ้าอันไหนตั้งค่า 'visible' เป็น false จะถูกซ่อนอัตโนมัติ

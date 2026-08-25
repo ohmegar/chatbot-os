@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ChatbotDocument;
 use App\Models\ChatbotDocumentLog;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
-use Gemini\Laravel\Facades\Gemini;
+use App\Models\ChatbotLog;
 use Gemini\Enums\MimeType;
-use Smalot\PdfParser\Parser;
+use Gemini\Laravel\Facades\Gemini;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
+use Smalot\PdfParser\Parser;
 
 
 class GeminiAdminController extends Controller
@@ -164,5 +165,25 @@ class GeminiAdminController extends Controller
             ->paginate(15);
 
         return view('pages.admin.chatbot.logs', compact('logs'));
+    }
+
+
+    public function historyAll(Request $request)
+    {
+        // ดึงประวัติการสนทนาทั้งหมด พร้อมเรียงจากล่าสุดไปเก่าสุด (พร้อมระบบค้นหาตามคำถามหรือรหัสพนักงาน)
+        $query = ChatbotLog::orderBy('created_at', 'desc');
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('question', 'LIKE', "%{$search}%")
+                    ->orWhere('answer', 'LIKE', "%{$search}%")
+                    ->orWhere('emp_id', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $logs = $query->paginate(15)->withQueryString();
+
+        return view('pages.admin.chatbot.history-all', compact('logs'));
     }
 }
