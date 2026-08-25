@@ -74,7 +74,7 @@
         <div class="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
             <form id="chat-form" class="flex gap-3">
                 @csrf
-                <input type="text" id="question-input" placeholder="พิมพ์คำถามของคุณที่นี่..."
+                <input type="text" id="question-input" placeholder="พิมพ์คำถามของท่านที่นี่..."
                     class="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-brand-500 text-sm"
                     required>
                 <button type="submit"
@@ -135,12 +135,26 @@
                 if (response.ok && data.status === 'success') {
                     const formattedAnswer = formatAiResponse(data.answer);
 
-                    // แสดงผลคำตอบ AI แบบสะอาดตาโดยไม่มีแหล่งอ้างอิงแสดงขึ้นมา
+                    // 🟢 เพิ่มส่วนแสดงแหล่งอ้างอิง (Source) ไว้ด้านล่างคำตอบของ AI ตรงนี้
+                    let sourceHtml = '';
+                    if (data.source) {
+                        sourceHtml = `
+        <div class="text-xs text-gray-400 dark:text-gray-500 italic mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+            </svg>
+            <span>แหล่งอ้างอิงจาก: <strong class="text-gray-600 dark:text-gray-300 font-medium">${data.source}</strong></span>
+        </div>
+    `;
+                    }
+
+                    // แสดงผลคำตอบ AI พร้อมแหล่งอ้างอิงที่ดึงมาจาก Title
                     chatBox.innerHTML += `
                         <div class="flex items-start gap-3 mb-4">
                             <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white text-xs shrink-0">AI</div>
                             <div class="p-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm max-w-xl leading-relaxed shadow-sm">
-                                ${formattedAnswer}
+                                <div>${formattedAnswer}</div>
+                                ${sourceHtml}
                             </div>
                         </div>`;
                 } else {

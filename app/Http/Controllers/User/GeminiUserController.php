@@ -18,6 +18,7 @@ class GeminiUserController extends Controller
     }
 
 
+
     public function askAi(Request $request)
     {
         $request->validate(['question' => 'required|string|max:1000']);
@@ -25,65 +26,99 @@ class GeminiUserController extends Controller
         $empId = Session::get('employee_id') ?? 1;
 
         try {
-            // 1. ดึงเอกสารล่าสุดในระบบ
-            // โดยปกติแล้ว หากโมเดล ChatbotDocument ของคุณมีการใช้งานแทร็ก Soft Deletes
-            // (use SoftDeletes;) คำสั่งค้นหาข้อมูลทั่วไป เช่น ChatbotDocument::latest()->first()
-            // จะทำการ ข้ามเอกสารที่ถูกย้ายไปถังขยะให้อัตโนมัติ อยู่แล้ว
-            $document = ChatbotDocument::latest()->first();
+            // 1. ดึงเอกสารทั้งหมดที่ยังไม่ถูกลบ
+            $documents = ChatbotDocument::whereNull('deleted_at')->latest()->get();
 
-            if (!$document) {
+            if ($documents->isEmpty()) {
                 return response()->json([
                     'status' => 'success',
-                    'answer' => 'ขออภัยครับ ยังไม่มีเอกสารระเบียบในระบบ กรุณาอัปโหลดเอกสารก่อนใช้งาน',
+                    'answer' => 'ขออภัยค่ะ ยังไม่มีเอกสารในระบบ',
                     'source' => null
                 ]);
             }
 
-            $sourceInfo = $document->original_filename ?? $document->title;
-            $documentId = $document->getKey(); // หรือ $document->id
+            $primaryKeyName = (new ChatbotDocument())->getKeyName();
+            $documentIds = $documents->pluck($primaryKeyName);
 
-            // 2. ดึงข้อมูล Chunk โดยรองรับทั้งพิมพ์เล็กและพิมพ์ใหญ่ของ Oracle Driver
-            $chunks = DB::table('SUPPORT_CHATBOT_DOCUMENT_CHUNKS')
-                ->where('DOCUMENT_ID', $documentId)
-                ->orderBy('CHUNK_INDEX', 'asc')
-                ->get()
-                ->map(function ($item) {
-                    // ดึงข้อความจากคอลัมน์ ไม่ว่าจะมาเป็นตัวพิมพ์เล็กหรือพิมพ์ใหญ่
-                    return $item->chunk_text ?? $item->CHUNK_TEXT ?? '';
-                })
-                ->toArray();
+            // 2. ดึง Chunks ทั้งหมดพร้อมระบุ ID และ Title ของเอกสารแต่ละชิ้น
+            $rawChunks = DB::table('SUPPORT_CHATBOT_DOCUMENT_CHUNKS as c')
+                ->join('SUPPORT_CHATBOT_DOCUMENTS as d', 'c.DOCUMENT_ID', '=', 'd.' . $primaryKeyName)
+                ->whereIn('c.DOCUMENT_ID', $documentIds)
+                ->whereNull('d.deleted_at')
+                ->orderBy('c.DOCUMENT_ID', 'desc')
+                ->orderBy('c.CHUNK_INDEX', 'asc')
+                ->select('c.CHUNK_TEXT as chunk_text', 'd.' . $primaryKeyName . ' as doc_id', 'd.title as title')
+                ->get();
 
-            $combinedContext = implode("\n\n", $chunks);
-
-            // ลองใส่บรรทัดนี้ไว้ก่อนส่งให้ Gemini ใน GeminiUserController.php
-            // Log::info("AI Context Content: " . substr($combinedContext, 0, 300)); // ดูข้อความ 300 ตัวอักษรแรก
-
-            if (empty($combinedContext)) {
+            if ($rawChunks->isEmpty()) {
                 return response()->json([
                     'status' => 'success',
-                    'answer' => 'ขออภัยครับ ไม่พบเนื้อหาข้อความภายในระบบนี้',
-                    'source' => $sourceInfo
+                    'answer' => 'ขออภัยค่ะ ไม่พบเนื้อหาข้อความภายในเอกสาร',
+                    'source' => null
                 ]);
             }
 
-            // 3. เขียน Prompt ควบคุมให้ AI อ่านจากเนื้อหา Chunk ที่ดึงมา
+            // 3. จัดรูปแบบเนื้อหาให้ AI มองเห็นรหัสเอกสาร (ID) และข้อความ
+            $contextLines = [];
+            foreach ($rawChunks as $row) {
+                if (!empty($row->chunk_text)) {
+                    $docId = $row->doc_id;
+                    $docTitle = $row->title ?? 'เอกสารไม่ระบุชื่อ';
+                    // ใส่รหัส ID กำกับไว้ เพื่อให้ AI อ้างอิงกลับมาเป็นตัวเลข ID ได้แม่นยำ
+                    $contextLines[] = "[DOC_ID: {$docId} | ชื่อเอกสาร: {$docTitle}]\n{$row->chunk_text}";
+                }
+            }
+            $combinedContext = implode("\n\n--------------------\n\n", $contextLines);
+
+            // 4. บังคับให้ AI ตอบกลับมาเป็น JSON โดยเลือก "DOC_ID" ที่ใช้ตอบ
             $prompt = "คุณคือผู้ช่วยอัจฉริยะของกรมวิทยาศาสตร์บริการ หน้าที่ของคุณคือตอบคำถามโดยอ้างอิงจาก 'เนื้อหาเอกสาร' ที่กำหนดให้ด้านล่างนี้เท่านั้น " .
                 "ห้ามใช้ความรู้ภายนอก ห้ามแต่งเติมเองเด็ดขาด! " .
-                "หากคำตอบไม่ได้อยู่ในเอกสารนี้ ให้ตอบตรงๆ ว่า 'ขออภัยครับ ไม่พบข้อมูลดังกล่าวในระเบียบหรือเอกสารที่อัปโหลดไว้' \n\n" .
+                "หากคำตอบไม่ได้อยู่ในเอกสารนี้ ให้ตอบคำว่า 'ขออภัยค่ะ ไม่พบข้อมูลดังกล่าวในระเบียบหรือเอกสารที่อัปโหลดไว้' " .
+                "และให้คุณตรวจสอบดูว่าข้อมูลที่คุณนำมาใช้ตอบนั้นมาจาก [DOC_ID: ...] ของเอกสารเล่มไหน ให้ระบุตัวเลข DOC_ID นั้นกลับมาด้วย\n\n" .
+                "กรุณาตอบกลับมาในรูปแบบ JSON ที่มีโครงสร้างนี้เท่านั้น (ห้ามมีข้อความอื่นนอกเหนือจาก JSON):\n" .
+                "{\n" .
+                "  \"answer\": \"ข้อความคำตอบของคุณที่จัดรูปแบบอ่านง่าย\",\n" .
+                "  \"doc_id\": รหัสตัวเลข DOC_ID ของเอกสารที่ใช้ตอบ (ถ้าไม่พบข้อมูลหรือตอบว่าไม่พบ ให้ใส่ค่าเป็น null)\n" .
+                "}\n\n" .
                 "--- เนื้อหาเอกสารอ้างอิง ---\n" .
                 $combinedContext . "\n" .
                 "----------------------------\n\n" .
                 "คำถามจากผู้ใช้งาน: " . $question;
 
-            // 4. ส่งข้อมูลให้ Gemini ประมวลผล
+            // 5. ส่งให้ Gemini ประมวลผล
             $response = Gemini::generativeModel(model: 'gemini-3.5-flash')->generateContent($prompt);
-            $aiAnswer = $response->text();
+            $aiRawResponse = trim($response->text());
 
-            // 5. บันทึกประวัติการสนทนา
+            // ทำความสะอาด JSON
+            $cleanedJson = preg_replace('/^```json\s*|\s*```$/i', '', $aiRawResponse);
+            $dataResponse = json_decode($cleanedJson, true);
+
+            $aiAnswer = '';
+            $sourceInfo = null;
+
+            if (json_last_error() === JSON_ERROR_NONE && isset($dataResponse['answer'])) {
+                $aiAnswer = $dataResponse['answer'];
+                $selectedDocId = $dataResponse['doc_id'] ?? null;
+
+                // 6. นำ DOC_ID ที่ AI เลือก ไปดึงชื่อ "Title ตรงๆ" จากฐานข้อมูลมาใช้งานทันที!
+                if (!empty($selectedDocId)) {
+                    $matchedDoc = ChatbotDocument::where($primaryKeyName, $selectedDocId)->first();
+                    if ($matchedDoc && !empty($matchedDoc->title)) {
+                        $sourceInfo = $matchedDoc->title; //  ได้ชื่อ Title ตรงเป๊ะจากตารางเอกสาร
+                    }
+                }
+            } else {
+                // กรณีสำรอง ถ้า JSON พัง ให้ใช้ข้อความดิบ
+                $aiAnswer = $aiRawResponse;
+                $sourceInfo = $documents->first()?->title;
+            }
+
+            // 7. บันทึกประวัติการสนทนาลงฐานข้อมูล
             ChatbotLog::create([
                 'emp_id'     => $empId,
                 'question'   => $question,
                 'answer'     => $aiAnswer,
+                'source'     => $sourceInfo,
                 'ip_address' => $request->ip(),
             ]);
 
@@ -99,6 +134,8 @@ class GeminiUserController extends Controller
             ], 500);
         }
     }
+
+
 
 
     public function myHistory()

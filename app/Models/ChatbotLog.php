@@ -20,6 +20,7 @@ class ChatbotLog extends Model
         'emp_id',     // รหัสพนักงานผู้ถาม
         'question',   // คำถาม
         'answer',     // คำตอบจาก AI (Gemini)
+        'source',
         'ip_address', // ไอพีแอดเดรส
     ];
 }

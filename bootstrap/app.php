@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        // 👇 ลงทะเบียน Alias 'check.ie' ตรงนี้ครับ
+        // 👇 ลงทะเบียน Alias 'check.ie' ตรงนี้
         $middleware->alias([
             'check.ie' => \App\Http\Middleware\CheckBrowserIE::class,
 
