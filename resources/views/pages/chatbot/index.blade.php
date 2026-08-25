@@ -51,7 +51,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h2 class="font-bold text-gray-800 dark:text-white">DSS AI Assistant (ทดสอบด้านระเบียบสารบรรณ)</h2>
+                    <h2 class="font-bold text-gray-800 dark:text-white">DSS AI Assistant (ทดสอบขอบข่ายระเบียบสารบรรณ)</h2>
                     <p class="text-xs text-gray-500">ระบบปัญญาประดิษฐ์อัจฉริยะขับเคลื่อนด้วย Google Gemini API</p>
                 </div>
             </div>
